@@ -2,6 +2,7 @@ import asyncio
 from playwright.async_api import async_playwright
 from dotenv import load_dotenv
 import os
+import re
 load_dotenv()
 
 # create class tokopedia
@@ -55,7 +56,7 @@ class Tokopedia:
             case _:
                 self.filter = self.filter_data[0]
 
-        self.url = f"https://www.tokopedia.com/search?ob={self.filter['ob']}&page={self.page}&q={self.query}&st=product&navsource="
+        self.url = f"{self.url}/search?ob={self.filter['ob']}&page={self.page}&q={self.query}&st=product&navsource="
 
     def sync_scrape_data(self):
         """Menjalankan Playwright dalam event loop tersendiri."""
@@ -90,10 +91,19 @@ class Tokopedia:
             return self.data
         
     def get_product(self, data=[]):
-        result = []
+        output = []
         response = data[0][0]["data"]["searchProductV5"]["data"]["products"]
         for i, product in enumerate(response):
-            result.append({
+            sold = "0"
+            for group in product.get("labelGroups", []):
+                title = group.get("title", "")
+                match = re.search(r"(\d+)", title)
+                if match:
+                    sold = match.group(1)
+                    break 
+
+            priceOriginal = product["price"]["original"] if product["price"]["original"] else "0"
+            output.append({
                 "id": product["id"],
                 "url": product["url"],
                 "media_url": [
@@ -102,11 +112,13 @@ class Tokopedia:
                     product["mediaURL"]["videoCustom"]
                 ],
                 "name": product["name"],
+                "sold": sold,
                 "price": [
                     {
                         "discount_percentage": product["price"]["discountPercentage"],
                         "number": product["price"]["number"],
-                        "original": product["price"]["original"],
+                        "original_number": int(priceOriginal.replace("Rp", "").replace(" ", "").replace(".", "")),
+                        "original_text": priceOriginal,
                         "text": product["price"]["text"]
                     }
                 ],
@@ -119,9 +131,13 @@ class Tokopedia:
                         "tier": product["shop"]["tier"],
                         "city": product["shop"]["city"]
                     }
-                ],
-                "image": product["url"]
+                ]
             })
 
+        result = {
+            "result": output,
+            "total_data": str(data[0][0]["data"]["searchProductV5"]["header"]["totalData"]),
+            "page_size": str(len(output))
+        }
         return result
 

@@ -9,7 +9,8 @@ class ResponseFormat:
             query = "", 
             page = "1", 
             data = [], 
-            total = 0
+            page_size = 0,
+            total_data = 0
         ):
         self.code = code
         self.message = message
@@ -17,7 +18,8 @@ class ResponseFormat:
         self.query = query
         self.page = page
         self.data = data
-        self.total = total
+        self.page_size = page_size
+        self.total_data = total_data
 
     def success(self):
         return jsonify({
@@ -26,7 +28,8 @@ class ResponseFormat:
             "query": self.query,
             "page": self.page,
             "data": self.data,
-            "total": self.total
+            "page_size": self.page_size,
+            "total_data": self.total_data
         }), self.code
 
     def error(self):
