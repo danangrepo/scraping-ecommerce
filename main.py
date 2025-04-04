@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from scrape.tokopedia import Tokopedia
 from scrape.blibli import Blibli
 from scrape.lazada import Lazada
+from scrape.shopee import Shopee
 from utils.response_format import ResponseFormat
 import traceback
 
@@ -34,6 +35,9 @@ def get_scraped_data():
         elif (ecommerce == "lazada"):
             platform = Lazada(query, page, filter)
             future = executor.submit(platform.sync_scrape_data)
+        elif (ecommerce == "shopee"):
+            platform = Shopee(query, page, filter)
+            future = executor.submit(platform.sync_scrape_data)
         
         data = future.result()
         response = platform.get_product(data)
@@ -48,7 +52,6 @@ def get_scraped_data():
             total_data=response["total_data"]
         ).success()
     except Exception as e:
-        print(f"Error terjadi: {e}")
         error_detail = traceback.format_exc()
         print(f"Error: {str(e)}\nDetail:\n{error_detail}")
 

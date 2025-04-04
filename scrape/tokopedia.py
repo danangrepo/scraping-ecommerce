@@ -62,9 +62,9 @@ class Tokopedia:
         """Menjalankan Playwright dalam event loop tersendiri."""
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        return loop.run_until_complete(self.playwright_scrape())
+        return loop.run_until_complete(self.processScrape())
     
-    async def playwright_scrape(self):
+    async def processScrape(self):
         """Fungsi async untuk scraping menggunakan Playwright"""
         async with async_playwright() as playwright:
             browser = await playwright.chromium.launch(headless=False)

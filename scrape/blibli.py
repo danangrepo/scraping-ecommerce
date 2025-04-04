@@ -3,7 +3,6 @@ from playwright.async_api import async_playwright
 import undetected_chromedriver as uc
 from dotenv import load_dotenv
 import os
-import time
 load_dotenv()
 
 # create class blibli
@@ -65,9 +64,9 @@ class Blibli:
         """Menjalankan Playwright dalam event loop tersendiri."""
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        return loop.run_until_complete(self.playwright_scrape())
+        return loop.run_until_complete(self.processScrape())
     
-    async def playwright_scrape(self):
+    async def processScrape(self):
         """Fungsi async untuk scraping menggunakan Playwright"""
         browser = uc.Chrome(use_subprocess=True)  # Start browser
         browser.get(self.url)
@@ -92,12 +91,13 @@ class Blibli:
         for i, product in enumerate(response):
             priceOriginal = product["price"].get("strikeThroughPriceDisplay", product["price"]["priceDisplay"])
             
+
             output.append({
                 "id": product["id"],
                 "url": f"{os.getenv("BLIBLI_URL")}{product["url"]}",
                 "media_url": product["images"],
                 "name": product["name"],
-                "sold": str(product["soldCountTotal"]),
+                "sold": str(product.get("soldCountTotal", 0)),
                 "price": [
                     {
                         "discount_percentage": product["price"]["discount"],
