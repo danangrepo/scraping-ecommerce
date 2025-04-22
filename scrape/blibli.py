@@ -98,25 +98,21 @@ class Blibli:
                 "media_url": product["images"],
                 "name": product["name"],
                 "sold": str(product.get("soldCountTotal", 0)),
-                "price": [
-                    {
-                        "discount_percentage": product["price"]["discount"],
-                        "number": product["price"]["minPrice"],
-                        "original_number": int(priceOriginal.replace("Rp", "").replace(" ", "").replace(".", "")),
-                        "original_text": priceOriginal,
-                        "text": product["price"]["priceDisplay"]
-                    }
-                ],
+                "price": {
+                    "discount_percentage": product["price"]["discount"],
+                    "number": product["price"]["minPrice"],
+                    "original_number": int(priceOriginal.replace("Rp", "").replace(" ", "").replace(".", "")),
+                    "original_text": priceOriginal,
+                    "text": product["price"]["priceDisplay"]
+                },
                 "rating": str(product["review"]["rating"]),
-                "shop": [
-                    {
-                        "id": product["merchantCode"],
-                        "name": product["merchantName"],
-                        "url": "",
-                        "tier": "",
-                        "city": product["location"]
-                    }
-                ]
+                "shop": {
+                    "id": product["merchantCode"],
+                    "name": product["merchantName"],
+                    "url": "",
+                    "tier": "",
+                    "city": product["location"]
+                }
             })
 
         result = {

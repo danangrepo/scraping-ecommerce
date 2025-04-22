@@ -96,25 +96,21 @@ class Lazada:
                 ],
                 "name": product["name"],
                 "sold": sold,
-                "price": [
-                    {
-                        "discount_percentage": round(((originalPrice - int(product["price"])) / originalPrice) * 100, 1),
-                        "number": int(product["price"]),
-                        "original_number": originalPrice,
-                        "original_text": f"Rp{originalPrice:,}".replace(",", "."),
-                        "text": product["priceShow"].replace(",",".")
-                    }
-                ],
+                "price": {
+                    "discount_percentage": round(((originalPrice - int(product["price"])) / originalPrice) * 100, 1),
+                    "number": int(product["price"]),
+                    "original_number": originalPrice,
+                    "original_text": f"Rp{originalPrice:,}".replace(",", "."),
+                    "text": product["priceShow"].replace(",",".")
+                },
                 "rating": product["ratingScore"],
-                "shop": [
-                    {
-                        "id": product["sellerId"],
-                        "name": product["sellerName"],
-                        "url": "",
-                        "tier": "",
-                        "city": product["location"]
-                    }
-                ]
+                "shop": {
+                    "id": product["sellerId"],
+                    "name": product["sellerName"],
+                    "url": "",
+                    "tier": "",
+                    "city": product["location"]
+                }
             })
         
         result = {

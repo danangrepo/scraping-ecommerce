@@ -155,11 +155,16 @@ class Shopee:
                                 if method == 'Network.responseReceived':
                                     response_url = message.get('params',{}).get('response',{}).get('url','')
                                     request_id = message.get('params', {}).get('requestId', '')
+                                    
                                     if self.endpoint_product in response_url:
+                                        self.data = []
                                         response = driver.execute_cdp_cmd('Network.getResponseBody',{'requestId':request_id})
                                         response_body = response.get('body','')
                                         self.data.append(response_body)
-                                        # print("Response URL: " + response_url + ", Response Body: " + str(response_body))
+                                        # save response to file
+                                        with open("contoh.txt", "w", encoding="utf-8") as file:
+                                            file.write(response_body)
+                                            file.close()
                                         break
                             except Exception as e:
                                 print(e)
@@ -211,53 +216,45 @@ class Shopee:
             os.remove(filename)  # Hapus file jika corrupt
         
     def get_product(self, data=[]):
-        print(data)
         output = []
-        response = data[0][0]["data"]["searchProductV5"]["data"]["products"]
-        for i, product in enumerate(response):
-            sold = "0"
-            for group in product.get("labelGroups", []):
-                title = group.get("title", "")
-                match = re.search(r"(\d+)", title)
-                if match:
-                    sold = match.group(1)
-                    break 
 
-            priceOriginal = product["price"]["original"] if product["price"]["original"] else "0"
+        dataParsing = json.loads(data[0])
+        response = dataParsing["items"]
+
+        for i, product in enumerate(response):
+            priceOriginal = product["item_basic"]["price_before_discount"] // 100000
+            priceDisplay = product["item_basic"]["price"] // 100000
+            mediaUrl = []
+            for media in product["item_basic"]["images"]:
+                mediaUrl.append(f"https://down-id.img.susercontent.com/file/{media}")
+
             output.append({
-                "id": product["id"],
-                "url": product["url"],
-                "media_url": [
-                    product["mediaURL"]["image"],
-                    product["mediaURL"]["image300"],
-                    product["mediaURL"]["videoCustom"]
-                ],
-                "name": product["name"],
-                "sold": sold,
-                "price": [
-                    {
-                        "discount_percentage": product["price"]["discountPercentage"],
-                        "number": product["price"]["number"],
-                        "original_number": int(priceOriginal.replace("Rp", "").replace(" ", "").replace(".", "")),
-                        "original_text": priceOriginal,
-                        "text": product["price"]["text"]
-                    }
-                ],
-                "rating": product["rating"],
-                "shop": [
-                    {
-                        "id": product["shop"]["id"],
-                        "name": product["shop"]["name"],
-                        "url": product["shop"]["url"],
-                        "tier": product["shop"]["tier"],
-                        "city": product["shop"]["city"]
-                    }
-                ]
+                "id": str(product["item_basic"]["itemid"]),
+                "url": "https://shopee.co.id/" + re.sub(r"[ /|+]+", "-", product["item_basic"]["name"]) + "-i." + str(product["item_basic"]["shopid"]) + "." + str(product["item_basic"]["itemid"]),
+                "media_url": mediaUrl,
+                "name": product["item_basic"]["name"],
+                "sold": str(product["item_basic"]["global_sold_count"]),
+                "price": {
+                    "discount_percentage": 0 if product["item_basic"]["discount"] is None else int(product["item_basic"]["discount"].replace("%", "")),
+                    "number": priceDisplay,
+                    "original_number": priceOriginal,
+                    "original_text": f"Rp{priceOriginal:,}".replace(",", "."),
+                    "text": f"Rp{priceDisplay:,}".replace(",", ".")
+                },
+                "rating": str(round(product["item_basic"]["item_rating"]["rating_star"], 1)),
+                "shop": {
+                    "id": str(product["item_basic"]["shopid"]),
+                    "name": product["item_basic"]["shop_name"],
+                    "url": "",
+                    "tier": "",
+                    "city": product["item_basic"]["shop_location"]
+                }
+            
             })
 
         result = {
             "result": output,
-            "total_data": str(data[0][0]["data"]["searchProductV5"]["header"]["totalData"]),
+            "total_data": str(dataParsing["total_count"]),
             "page_size": str(len(output))
         }
         return result

@@ -40,6 +40,8 @@ def get_scraped_data():
             future = executor.submit(platform.sync_scrape_data)
         
         data = future.result()
+        print("data")
+        print(len(data))
         response = platform.get_product(data)
         
         return ResponseFormat(

@@ -58,6 +58,24 @@ class Tokopedia:
 
         self.url = f"{self.url}/search?ob={self.filter['ob']}&page={self.page}&q={self.query}&st=product&navsource="
 
+    
+    async def go_to_page(self, page, page_number):
+        print("go to page")
+        try:
+            pagination_btn = await page.query_selector(f'button[aria-label="Laman {page_number}"]')
+            if pagination_btn:
+                await pagination_btn.click()
+                await asyncio.sleep(3)
+                print(f"✅ Berhasil pindah ke halaman {page_number}")
+            else:
+                print(f"⚠️ Tombol halaman {page_number} tidak ditemukan.")
+        except Exception as e:
+            print(f"⚠️ Gagal klik halaman {page_number}: {e}")
+ 
+    async def scroll_page(self, page, max_scrolls=5):
+        for _ in range(max_scrolls):
+            await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+
     def sync_scrape_data(self):
         """Menjalankan Playwright dalam event loop tersendiri."""
         loop = asyncio.new_event_loop()
@@ -73,6 +91,7 @@ class Tokopedia:
             # add promo produk
             async def handle_response(response):
                 if self.endpoint_product in response.url:
+                    self.data = []
                     json_data = await response.json()
                     self.data.append(json_data)
 
@@ -81,11 +100,16 @@ class Tokopedia:
             await tabPage.goto(self.url)
             
             await tabPage.click("//button[contains(@data-unify, 'Select')]", timeout=500)
-            await asyncio.sleep(3)
+            await asyncio.sleep(1)
             best_match_option = await tabPage.query_selector(f'button[data-item-text="Paling Sesuai"]')
             await best_match_option.click()
             await asyncio.sleep(1)
-                
+
+            if int(self.page) > 1:
+                await self.scroll_page(tabPage, max_scrolls=2)
+                await asyncio.sleep(1)
+                await self.go_to_page(tabPage, self.page)
+                await asyncio.sleep(1)
                 
             await browser.close()
             return self.data
@@ -113,25 +137,21 @@ class Tokopedia:
                 ],
                 "name": product["name"],
                 "sold": sold,
-                "price": [
-                    {
-                        "discount_percentage": product["price"]["discountPercentage"],
-                        "number": product["price"]["number"],
-                        "original_number": int(priceOriginal.replace("Rp", "").replace(" ", "").replace(".", "")),
-                        "original_text": priceOriginal,
-                        "text": product["price"]["text"]
-                    }
-                ],
+                "price": {
+                    "discount_percentage": product["price"]["discountPercentage"],
+                    "number": product["price"]["number"],
+                    "original_number": int(priceOriginal.replace("Rp", "").replace(" ", "").replace(".", "")),
+                    "original_text": priceOriginal,
+                    "text": product["price"]["text"]
+                },
                 "rating": product["rating"],
-                "shop": [
-                    {
-                        "id": product["shop"]["id"],
-                        "name": product["shop"]["name"],
-                        "url": product["shop"]["url"],
-                        "tier": product["shop"]["tier"],
-                        "city": product["shop"]["city"]
-                    }
-                ]
+                "shop": {
+                    "id": product["shop"]["id"],
+                    "name": product["shop"]["name"],
+                    "url": product["shop"]["url"],
+                    "tier": product["shop"]["tier"],
+                    "city": product["shop"]["city"]
+                }
             })
 
         result = {
