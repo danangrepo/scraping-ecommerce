@@ -98,7 +98,7 @@ class Tokopedia:
             # Pasang listener sebelum membuka halaman
             tabPage.on("response", lambda response: asyncio.create_task(handle_response(response)))
             await tabPage.goto(self.url)
-            
+            await tabPage.wait_for_selector("//button[contains(@data-unify, 'Select')]")
             await tabPage.click("//button[contains(@data-unify, 'Select')]", timeout=500)
             await asyncio.sleep(1)
             best_match_option = await tabPage.query_selector(f'button[data-item-text="Paling Sesuai"]')

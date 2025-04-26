@@ -135,6 +135,7 @@ class Shopee:
             elif back_button:
                 print("Kembali ke Halaman Utama")
                 back_button[0].click()
+                time.sleep(3)
                 driver.execute_script(f"window.location.href = '{self.url}'")
                 time.sleep(5)
             else:
